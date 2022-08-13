@@ -1,1 +1,1 @@
-# deep-learning-applications
+practicing-deep-learning
