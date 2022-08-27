@@ -12,13 +12,11 @@ import torch.nn as nn
 
 class ClassifierTrainer():
     
-    def __init__(self, model, optimizer,
-                 train_loader, test_loader,
-                 CUDA):
+    def __init__(self, model, optimizer, train_loader, test_loader):
         
         self.model = model
         self.model.init_model_params()
-        self.CUDA = CUDA
+        self.CUDA = torch.cuda.is_available()
         if self.CUDA:
             self.model = model.cuda()
         self.loss_fn = nn.CrossEntropyLoss() 
