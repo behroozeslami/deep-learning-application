@@ -12,10 +12,11 @@ import torch.nn as nn
 
 class ClassifierTrainer():
     
-    def __init__(self, model, optimizer, train_loader, test_loader):
+    def __init__(self, model, optimizer, train_loader, test_loader, init_model_pars=True):
         
         self.model = model
-        self.model.init_model_params()
+        if init_model_pars:
+            self.model.init_model_params()
         self.CUDA = torch.cuda.is_available()
         if self.CUDA:
             self.model = model.cuda()
