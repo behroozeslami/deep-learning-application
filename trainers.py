@@ -12,7 +12,7 @@ import torch.nn as nn
 
 class ClassifierTrainer():
     
-    def __init__(self, model, optimizer, train_loader, test_loader, init_model_pars=True):
+    def __init__(self, model, optimizer, train_loader, test_loader, init_model_pars=True, scheduler=None):
         
         self.model = model
         if init_model_pars:
@@ -20,6 +20,7 @@ class ClassifierTrainer():
         self.CUDA = torch.cuda.is_available()
         if self.CUDA:
             self.model = model.cuda()
+        self.scheduler = scheduler
         self.loss_fn = nn.CrossEntropyLoss() 
         self.optimizer = optimizer
         self.train_loader = train_loader
@@ -65,6 +66,9 @@ class ClassifierTrainer():
 
             self.train_losses.append(epoch_loss.item())
             self.train_accuracies.append(epoch_accuracy.item())
+            
+            if self.scheduler is not None:
+                self.scheduler.step()
 
             self.model.eval()
 
@@ -94,6 +98,8 @@ class ClassifierTrainer():
                      self.test_losses[-1], self.test_accuracies[-1]))
             
     def predict(self, dataset, idx):
+        
+        self.model.eval()
         
         with torch.no_grad():
             x, y = dataset[idx]
