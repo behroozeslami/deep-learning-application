@@ -105,8 +105,10 @@ class ClassifierTrainer():
             x, y = dataset[idx]
             output = self.model.cpu()(x.unsqueeze(0))
             _, prediction = torch.max(output, 1)
+            if prediction.numel()==1:
+                prediction = prediction.item()
         
-        return prediction.item()
+        return prediction
     
     def save_model(self, file):
         
