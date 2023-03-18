@@ -12,7 +12,7 @@ import torch.nn as nn
 
 class ClassifierTrainer():
     
-    def __init__(self, model, optimizer, train_loader, test_loader, init_model_pars=True, scheduler=None):
+    def __init__(self, model, optimizer, train_loader, test_loader, init_model_pars=True, scheduler=None, loss_fn = nn.CrossEntropyLoss()):
         
         self.model = model
         if init_model_pars:
@@ -21,7 +21,7 @@ class ClassifierTrainer():
         if self.CUDA:
             self.model = model.cuda()
         self.scheduler = scheduler
-        self.loss_fn = nn.CrossEntropyLoss() 
+        self.loss_fn = loss_fn
         self.optimizer = optimizer
         self.train_loader = train_loader
         self.test_loader = test_loader
@@ -56,7 +56,7 @@ class ClassifierTrainer():
                 outputs = self.model(inputs)
                 _, predictions = torch.max(outputs, 1)
                 loss = self.loss_fn(outputs, labels)
-                accuracy = (predictions==labels).sum()/len(labels)
+                accuracy = (predictions==labels).sum()/labels.numel()
                 epoch_loss += loss/train_batch_num
                 epoch_accuracy += accuracy/train_batch_num
 
@@ -86,7 +86,7 @@ class ClassifierTrainer():
                     outputs = self.model(inputs)
                     _, predictions = torch.max(outputs, 1)
                     loss = self.loss_fn(outputs, labels)
-                    accuracy = (predictions==labels).sum()/len(labels)
+                    accuracy = (predictions==labels).sum()/labels.numel()
                     epoch_loss += loss/test_batch_num
                     epoch_accuracy += accuracy/test_batch_num
 
@@ -115,3 +115,4 @@ class ClassifierTrainer():
     def load_model(self, file):
         
         self.model.load_state_dict(torch.load(file))
+        
