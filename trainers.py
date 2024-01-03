@@ -118,3 +118,106 @@ class ClassifierTrainer():
         
         self.model.load_state_dict(torch.load(file))
         
+
+
+class Yolov1Trainer():
+    
+    def __init__(self, model, optimizer, train_loader, test_loader, init_model_pars=True, scheduler=None, loss_fn = nn.CrossEntropyLoss()):
+        
+        self.model = model
+        if init_model_pars:
+            self.model.init_model_params()
+        self.CUDA = torch.cuda.is_available()
+        if self.CUDA:
+            self.model = model.cuda()
+        self.scheduler = scheduler
+        self.loss_fn = loss_fn
+        self.optimizer = optimizer
+        self.train_loader = train_loader
+        self.test_loader = test_loader
+        self.train_losses = None
+        self.test_losses = None
+        
+    def fit(self, num_epochs):
+
+        self.train_losses = []
+        self.test_losses = []
+        self.train_accuracies = []
+        self.test_accuracies = []
+
+        train_batch_num = len(self.train_loader)
+        test_batch_num = len(self.test_loader)
+
+        for epoch in range(num_epochs):
+
+            epoch_loss = 0
+            batch_count = 0
+
+            self.model.train()
+
+            for (inputs, labels) in self.train_loader:
+
+                if self.CUDA:
+                    inputs = inputs.cuda()
+                    labels = labels.cuda()
+
+                outputs = self.model(inputs)
+                _, predictions = torch.max(outputs, 1)
+                loss = self.loss_fn(outputs, labels)
+                bach_size = inputs.shape[0]
+                epoch_loss += loss/(bach_size*train_batch_num)
+
+                self.optimizer.zero_grad()
+                loss.backward() 
+                self.optimizer.step()
+                batch_count+=1
+
+            self.train_losses.append(epoch_loss.item())
+            
+            if self.scheduler is not None:
+                self.scheduler.step()
+
+            self.model.eval()
+
+            with torch.no_grad():
+
+                epoch_loss = 0
+                batch_count = 0
+
+                for (inputs, labels) in self.test_loader:
+
+                    if self.CUDA:
+                        inputs = inputs.cuda()
+                        labels = labels.cuda()
+
+                    outputs = self.model(inputs)
+                    _, predictions = torch.max(outputs, 1)
+                    loss = self.loss_fn(outputs, labels)
+                    bach_size = inputs.shape[0]
+                    epoch_loss += loss/(bach_size*test_batch_num)
+                    batch_count+=1
+
+                self.test_losses.append(epoch_loss.item())
+
+            print ('Epoch {}/{}, Training Loss: {:.3f}, Testing Loss: {:.3f}'
+                   .format(epoch+1, num_epochs, self.train_losses[-1], self.test_losses[-1]))
+            
+    def predict(self, dataset, idx):
+        
+        self.model.eval()
+        
+        with torch.no_grad():
+            x, y = dataset[idx]
+            prediction = self.model.cpu()(x.unsqueeze(0))
+        
+        return prediction
+    
+    def save_model(self, file):
+        
+        torch.save(self.model.state_dict(), file)
+    
+    def load_model(self, file):
+        
+        self.model.load_state_dict(torch.load(file))
+        
+
