@@ -144,7 +144,7 @@ class YoloLoss(nn.Module):
         targetbox_area = torch.abs(targetbox_w*targetbox_h)
         all_iou = intersection_area/(allbox_area+targetbox_area-intersection_area+ 1e-6)
         maxiou_idx = all_iou.argmax(dim=-1)
-        maxiou_onehot = nn.functional.one_hot(maxiou_idx) # selects the box with higher iou
+        maxiou_onehot = nn.functional.one_hot(maxiou_idx, num_classes=self.B) # selects the box with higher iou
 
         # ======================== #
         #   FOR BOX COORDINATES    #
@@ -229,8 +229,8 @@ def convert_cellboxes(predictions,C=20):
     for n in range(B):
         predictions_converted[:,:,:,C+n*5+1] = (predictions_converted[:,:,:,C+n*5+1]+x_offset)/S
         predictions_converted[:,:,:,C+n*5+2] = (predictions_converted[:,:,:,C+n*5+2]+y_offset)/S
-        predictions_converted[:,:,:,C+n*5+3] = predictions_converted[:,:,:,C+n*5+3]/S
-        predictions_converted[:,:,:,C+n*5+4] = predictions_converted[:,:,:,C+n*5+4]/S
+        # predictions_converted[:,:,:,C+n*5+3] = predictions_converted[:,:,:,C+n*5+3]
+        # predictions_converted[:,:,:,C+n*5+4] = predictions_converted[:,:,:,C+n*5+4]
         
     return predictions_converted
 
